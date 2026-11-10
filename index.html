@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>storycmtech - Criador de Stories</title>
+    <!-- Tailwind CSS para Estilização Moderna -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- PWA Manifest Dinâmico -->
+    <link rel="manifest" id="pwa-manifest">
+    <meta name="theme-color" content="#ec4899">
+
+    <style>
+        .story-container {
+            aspect-ratio: 9 / 16;
+            max-height: 70vh;
+        }
+        /* Esconder scrollbars mantendo a funcionalidade */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Estilos do Slider */
+        .slide-container {
+            display: flex;
+            transition: transform 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-white min-h-screen flex flex-col font-sans select-none">
+
+    <!-- Cabeçalho -->
+    <header class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-50">
+        <div class="flex items-center space-x-2">
+            <div class="bg-gradient-to-tr from-pink-500 to-purple-600 p-2 rounded-xl text-white shadow-lg shadow-pink-500/30">
+                <i class="fa-solid fa-wand-magic-sparkles text-lg"></i>
+            </div>
+            <div>
+                <h1 class="font-black tracking-wider text-lg bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">storycmtech</h1>
+                <p class="text-xs text-slate-400">Editor Profissional para Stories</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2">
+            <button id="btn-install" class="hidden bg-slate-800 hover:bg-slate-700 text-xs px-3 py-2 rounded-lg font-medium transition border border-slate-700 flex items-center space-x-1">
+                <i class="fa-solid fa-download text-pink-400"></i>
+                <span>Instalar</span>
+            </button>
+            <button onclick="baixarImagem()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-3 py-2 rounded-lg text-sm font-medium transition border border-slate-700 flex items-center space-x-1.5">
+                <i class="fa-solid fa-download text-pink-400"></i>
+                <span class="hidden sm:inline">Guardar</span>
+            </button>
+            <button onclick="partilharStory()" class="bg-gradient-to-r from-pink-500 to-purple-600 hover:opacity-90 text-white px-4 py-2 rounded-lg text-sm font-bold shadow-lg shadow-pink-500/25 transition flex items-center space-x-1.5">
+                <i class="fa-solid fa-share-nodes"></i>
+                <span>Partilhar</span>
+            </button>
+        </div>
+    </header>
+
+    <!-- Área Principal / Workspace -->
+    <main class="flex-1 flex flex-col lg:flex-row items-center justify-center p-4 gap-6 max-w-7xl mx-auto w-full">
+        
+        <!-- Canvas do Story (9:16) -->
+        <div class="relative w-full max-w-[320px] story-container bg-slate-900 rounded-2xl overflow-hidden shadow-2xl border border-slate-800 flex items-center justify-center group" id="canvas-wrapper">
+            <canvas id="storyCanvas" width="1080" height="1920" class="w-full h-full object-contain"></canvas>
+            
+            <!-- Indicador de Carregamento -->
+            <div id="loader" class="absolute inset-0 bg-slate-950/80 backdrop-blur-sm flex flex-col items-center justify-center transition-opacity opacity-0 pointer-events-none">
+                <div class="w-10 h-10 border-4 border-pink-500 border-t-transparent rounded-full animate-spin mb-2"></div>
+                <p class="text-xs font-medium text-slate-300">A processar template...</p>
+            </div>
+        </div>
+
+        <!-- Painel de Controles & Sistema em Formato de Slide -->
+        <div class="flex-1 w-full max-w-xl bg-slate-900/90 backdrop-blur border border-slate-800 rounded-2xl p-4 flex flex-col space-y-4 shadow-xl">
+            
+            <!-- Abas de Navegação (Selecionar o Slide) -->
+            <div class="flex border-b border-slate-800 pb-2 space-x-2 overflow-x-auto no-scrollbar">
+                <button onclick="mudarSlide(0)" class="slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-pink-500 text-white shadow-md shadow-pink-500/20" data-index="0">
+                    <i class="fa-solid fa-layer-group mr-1.5"></i> 300+ Presets
+                </button>
+                <button onclick="mudarSlide(1)" class="slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700" data-index="1">
+                    <i class="fa-solid fa-image mr-1.5"></i> 300+ Fundos
+                </button>
+                <button onclick="mudarSlide(2)" class="slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700" data-index="2">
+                    <i class="fa-solid fa-quote-left mr-1.5"></i> 300+ Frases
+                </button>
+                <button onclick="mudarSlide(3)" class="slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700" data-index="3">
+                    <i class="fa-solid fa-face-smile mr-1.5"></i> 300+ Stickers
+                </button>
+            </div>
+
+            <!-- Container do Carrossel / Slides -->
+            <div class="overflow-hidden relative w-full">
+                <div id="sliderWrapper" class="slide-container w-full" style="width: 400%;">
+                    
+                    <!-- SLIDE 1: Templates -->
+                    <div class="w-1/4 flex flex-col space-y-3 px-1">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" oninput="filtrarOpcoes('templates', this.value)" placeholder="Pesquisar entre os 300+ presets..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+                        </div>
+                        <div id="container-templates" class="h-40 overflow-y-auto no-scrollbar space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- SLIDE 2: Fundos -->
+                    <div class="w-1/4 flex flex-col space-y-3 px-1">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" oninput="filtrarOpcoes('fundos', this.value)" placeholder="Pesquisar entre os 300+ fundos..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+                        </div>
+                        <div id="container-fundos" class="h-40 overflow-y-auto no-scrollbar space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- SLIDE 3: Frases -->
+                    <div class="w-1/4 flex flex-col space-y-3 px-1">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" oninput="filtrarOpcoes('frases', this.value)" placeholder="Pesquisar entre as 300+ frases..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+                        </div>
+                        <div id="container-frases" class="h-40 overflow-y-auto no-scrollbar space-y-2 pr-1"></div>
+                    </div>
+
+                    <!-- SLIDE 4: Stickers -->
+                    <div class="w-1/4 flex flex-col space-y-3 px-1">
+                        <div class="relative">
+                            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-500 text-sm"></i>
+                            <input type="text" oninput="filtrarOpcoes('stickers', this.value)" placeholder="Pesquisar entre os 300+ stickers..." class="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-4 py-2 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-pink-500 transition">
+                        </div>
+                        <div id="container-stickers" class="h-40 overflow-y-auto no-scrollbar space-y-2 pr-1"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Controles Manuais de Texto e Opacidade -->
+            <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800/80 space-y-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-300">Texto Principal / Marca d'Água</span>
+                    <span id="valOpacidade" class="text-xs text-pink-400 font-bold">Opacidade: 65%</span>
+                </div>
+                <input type="text" id="customTextInput" oninput="atualizarTextoCustomizado(this.value)" value="LIMPEZA" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-pink-500">
+                
+                <div class="flex items-center space-x-3">
+                    <span class="text-[10px] text-slate-400">Transparência:</span>
+                    <input type="range" id="rangeOpacidade" min="10" max="100" value="65" oninput="atualizarOpacidade(this.value)" class="flex-1 accent-pink-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
+                </div>
+            </div>
+
+            <!-- Ações Extra (Upload de Foto Própria e IA 3D) -->
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <label class="bg-slate-800 hover:bg-slate-700 text-slate-200 p-2.5 rounded-xl text-xs font-semibold cursor-pointer transition border border-slate-700 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-upload text-pink-400"></i>
+                    <span>Carregar Foto</span>
+                    <input type="file" id="uploadFoto" accept="image/*" class="hidden" onchange="carregarFotoUtilizador(event)">
+                </label>
+                <button onclick="simularGeracaoIA()" class="bg-gradient-to-r from-purple-600/30 to-pink-600/30 hover:from-purple-600/50 hover:to-pink-600/50 text-pink-300 p-2.5 rounded-xl text-xs font-semibold transition border border-pink-500/30 flex items-center justify-center space-x-2">
+                    <i class="fa-solid fa-robot"></i>
+                    <span>Boneca 3D IA</span>
+                </button>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- Rodapé com Suporte Atualizado -->
+    <footer class="text-center py-3 text-slate-400 text-xs border-t border-slate-900 mt-auto bg-slate-950">
+        storycmtech PWA — Suporte: <a href="mailto:sistemacmtech@gmail.com" class="text-pink-400 hover:underline font-medium">Carlamitertech/sistemacmtech@gmail.com</a>
+    </footer>
+
+    <!-- Lógica JavaScript do PWA, Slider & Editor Canvas -->
+    <script>
+        // --- 1. GERAÇÃO DINÂMICA DE DADOS (300+ itens em cada categoria) ---
+        const gerarListaGrande = (prefixo, total = 300) => {
+            const lista = [];
+            const temas = ['Limpeza', 'Café & Amor', 'Motivacional', 'Trabalho', 'Unhas & Estética', 'Pet & Zoi', 'Fitness', 'Negócios', 'Moda', 'Família'];
+            for (let i = 1; i <= total; i++) {
+                const temaAleatorio = temas[(i - 1) % temas.length];
+                lista.push({
+                    id: `${prefixo}-${i}`,
+                    titulo: `${prefixo === 'templates' ? 'Preset' : prefixo === 'fundos' ? 'Fundo' : prefixo === 'frases' ? 'Frase' : 'Sticker'} #${i} - ${temaAleatorio}`,
+                    valor: prefixo === 'templates' || prefixo === 'frases' ? (prefixo === 'templates' ? temaAleatorio.toUpperCase() : `Frase inspiradora ${i} para começar o dia com muita energia!`) : `https://picsum.photos/seed/${prefixo}${i}/800/1200`,
+                    tag: temaAleatorio.toLowerCase()
+                });
+            }
+            return lista;
+        };
+
+        const dadosApp = {
+            templates: gerarListaGrande('templates', 300),
+            fundos: gerarListaGrande('fundos', 300),
+            frases: gerarListaGrande('frases', 300),
+            stickers: gerarListaGrande('stickers', 300)
+        };
+
+        let estadoAtual = {
+            slideAtual: 0,
+            texto: 'LIMPEZA',
+            opacidade: 0.65,
+            fundoUrl: 'https://picsum.photos/seed/fundo1/800/1200',
+            stickerUrl: 'https://picsum.photos/seed/sticker1/400/400',
+            filtros: { templates: '', fundos: '', frases: '', stickers: '' }
+        };
+
+        // --- 2. CONTROLE DO SLIDER ---
+        function mudarSlide(index) {
+            estadoAtual.slideAtual = index;
+            const wrapper = document.getElementById('sliderWrapper');
+            wrapper.style.transform = `translateX(-${index * 25}%)`;
+
+            document.querySelectorAll('.slide-tab').forEach((btn, idx) => {
+                if (idx === index) {
+                    btn.className = "slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-pink-500 text-white shadow-md shadow-pink-500/20";
+                } else {
+                    btn.className = "slide-tab px-4 py-2 rounded-xl text-xs font-bold transition bg-slate-800 text-slate-300 hover:bg-slate-700";
+                }
+            });
+        }
+
+        function filtrarOpcoes(tipo, termo) {
+            estadoAtual.filtros[tipo] = termo.toLowerCase();
+            renderizarLista(tipo);
+        }
+
+        function renderizarLista(tipo) {
+            const container = document.getElementById(`container-${tipo}`);
+            const termo = estadoAtual.filtros[tipo];
+            const lista = dadosApp[tipo].filter(item => 
+                item.titulo.toLowerCase().includes(termo) || item.tag.includes(termo)
+            ).slice(0, 50);
+
+            container.innerHTML = lista.map(item => `
+                <div onclick='selecionarItem("${tipo}", ${JSON.stringify(item)})' class="bg-slate-950 hover:bg-slate-800/80 border border-slate-800 hover:border-pink-500/50 p-2 rounded-xl flex items-center justify-between cursor-pointer transition group">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 rounded-lg bg-slate-900 overflow-hidden flex items-center justify-center border border-slate-800 shrink-0">
+                            ${tipo === 'fundos' || tipo === 'stickers' ? `<img src="${item.valor}" class="w-full h-full object-cover">` : `<i class="fa-solid fa-sparkles text-pink-400 text-xs"></i>`}
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-slate-200 group-hover:text-pink-400 transition">${item.titulo}</p>
+                            <p class="text-[10px] text-slate-500">Categoria: ${item.tag}</p>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-600 group-hover:text-pink-400 transition pr-2"></i>
+                </div>
+            `).join('');
+        }
+
+        function inicializarListas() {
+            ['templates', 'fundos', 'frases', 'stickers'].forEach(tipo => renderizarLista(tipo));
+        }
+
+        function selecionarItem(tipo, item) {
+            if (tipo === 'templates' || tipo === 'frases') {
+                estadoAtual.texto = item.valor;
+                document.getElementById('customTextInput').value = item.valor;
+            } else if (tipo === 'fundos') {
+                estadoAtual.fundoUrl = item.valor;
+            } else if (tipo === 'stickers') {
+                estadoAtual.stickerUrl = item.valor;
+            }
+            carregarECriarCanvas();
+        }
+
+        // --- 3. CONFIGURAÇÃO DO CANVAS E RENDERIZAÇÃO ---
+        const canvas = document.getElementById('storyCanvas');
+        const ctx = canvas.getContext('2d');
+
+        let imgFundoObj = new Image();
+        let imgStickerObj = new Image();
+
+        function carregarECriarCanvas() {
+            const loader = document.getElementById('loader');
+            loader.classList.add('opacity-100', 'pointer-events-auto');
+
+            imgFundoObj.crossOrigin = "anonymous";
+            imgFundoObj.src = estadoAtual.fundoUrl;
+            imgFundoObj.onload = () => {
+                imgStickerObj.crossOrigin = "anonymous";
+                imgStickerObj.src = estadoAtual.stickerUrl;
+                imgStickerObj.onload = desenharTudoNoCanvas;
+                imgStickerObj.onerror = desenharTudoNoCanvas;
+            };
+            imgFundoObj.onerror = () => {
+                desenharTudoNoCanvas();
+            };
+        }
+
+        function desenharTudoNoCanvas() {
+            ctx.clearRect(0, 0, 1080, 1920);
+
+            if (imgFundoObj.complete && imgFundoObj.naturalWidth !== 0) {
+                const hRatio = 1080 / imgFundoObj.width;
+                const vRatio = 1920 / imgFundoObj.height;
+                const ratio = Math.max(hRatio, vRatio);
+                const centroX = (1080 - imgFundoObj.width * ratio) / 2;
+                const centroY = (1920 - imgFundoObj.height * ratio) / 2;
+                ctx.drawImage(imgFundoObj, 0, 0, imgFundoObj.width, imgFundoObj.height, centroX, centroY, imgFundoObj.width * ratio, imgFundoObj.height * ratio);
+            } else {
+                ctx.fillStyle = '#1e1b4b';
+                ctx.fillRect(0, 0, 1080, 1920);
+            }
+
+            const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+            grad.addColorStop(0, 'rgba(0,0,0,0.3)');
+            grad.addColorStop(0.5, 'rgba(0,0,0,0.1)');
+            grad.addColorStop(1, 'rgba(0,0,0,0.4)');
+            ctx.fillStyle = grad;
+            ctx.fillRect(0, 0, 1080, 1920);
+
+            ctx.save();
+            ctx.globalAlpha = estadoAtual.opacidade;
+            ctx.font = '900 120px sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            let yPos = 400;
+            for (let i = 0; i < 5; i++) {
+                ctx.fillText(estadoAtual.texto.toUpperCase(), 540, yPos);
+                yPos += 260;
+            }
+            ctx.restore();
+
+            if (imgStickerObj.complete && imgStickerObj.naturalWidth !== 0) {
+                const tamanhoSticker = 600;
+                ctx.drawImage(imgStickerObj, (1080 - tamanhoSticker) / 2, 900, tamanhoSticker, tamanhoSticker);
+            }
+
+            const loader = document.getElementById('loader');
+            loader.classList.remove('opacity-100', 'pointer-events-auto');
+        }
+
+        function atualizarTextoCustomizado(val) {
+            estadoAtual.texto = val;
+            desenharTudoNoCanvas();
+        }
+
+        function atualizarOpacidade(val) {
+            estadoAtual.opacidade = val / 100;
+            document.getElementById('valOpacidade').innerText = `Opacidade: ${val}%`;
+            desenharTudoNoCanvas();
+        }
+
+        function carregarFotoUtilizador(event) {
+            const ficheiro = event.target.files[0];
+            if (ficheiro) {
+                const leitor = new FileReader();
+                leitor.onload = function(e) {
+                    estadoAtual.fundoUrl = e.target.result;
+                    carregarECriarCanvas();
+                };
+                leitor.readAsDataURL(ficheiro);
+            }
+        }
+
+        function simularGeracaoIA() {
+            estadoAtual.stickerUrl = `https://picsum.photos/seed/ia3d${Math.floor(Math.random() * 1000)}/400/400`;
+            carregarECriarCanvas();
+        }
+
+        function baixarImagem() {
+            const link = document.createElement('a');
+            link.download = 'storycmtech-template.jpg';
+            link.href = canvas.toDataURL('image/jpeg', 0.95);
+            link.click();
+        }
+
+        async function partilharStory() {
+            canvas.toBlob(async (blob) => {
+                const ficheiro = new File([blob], 'story.jpg', { type: 'image/jpeg' });
+                if (navigator.canShare && navigator.canShare({ files: [ficheiro] })) {
+                    try {
+                        await navigator.share({
+                            files: [ficheiro],
+                            title: 'storycmtech Story',
+                            text: 'Criado com storycmtech ✨'
+                        });
+                    } catch (err) {
+                        console.log('Partilha cancelada ou erro:', err);
+                    }
+                } else {
+                    baixarImagem();
+                }
+            }, 'image/jpeg', 0.95);
+        }
+
+        // --- 4. REGISTO DE PWA SERVICE WORKER & MANIFEST ---
+        const manifestData = {
+            name: "storycmtech",
+            short_name: "storycmtech",
+            start_url: "./",
+            display: "standalone",
+            background_color: "#020617",
+            theme_color: "#ec4899",
+            icons: [{ src: "https://picsum.photos/seed/icon512/512/512", sizes: "512x512", type: "image/png" }]
+        };
+        const blobManifest = new Blob([JSON.stringify(manifestData)], { type: 'application/json' });
+        document.getElementById('pwa-manifest').href = URL.createObjectURL(blobManifest);
+
+        if ('serviceWorker' in navigator) {
+            const swCode = `
+                self.addEventListener('install', e => { self.skipWaiting(); });
+                self.addEventListener('activate', e => { self.clients.claim(); });
+                self.addEventListener('fetch', e => { e.respondWith(fetch(e.request).catch(() => caches.match(e.request))); });
+            `;
+            const blobSW = new Blob([swCode], { type: 'text/javascript' });
+            navigator.serviceWorker.register(URL.createObjectURL(blobSW)).catch(err => console.log('SW falhou', err));
+        }
+
+        let deferredPrompt;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            document.getElementById('btn-install').classList.remove('hidden');
+        });
+
+        document.getElementById('btn-install').addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    document.getElementById('btn-install').classList.add('hidden');
+                }
+                deferredPrompt = null;
+            }
+        });
+
+        // Inicializar listas e canvas ao carregar a página
+        window.onload = () => {
+            inicializarListas();
+            carregarECriarCanvas();
+        };
+    </script>
+</body>
+</html>
