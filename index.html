@@ -146,7 +146,7 @@
                     <input type="range" id="rangeOpacidade" min="10" max="100" value="65" oninput="atualizarOpacidade(this.value)" class="flex-1 accent-pink-500 h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer">
                 </div>
 
-                <!-- NOVO: Controles de Exibição / Remoção do Sticker Central -->
+                <!-- Controles de Exibição / Remoção do Sticker Central -->
                 <div class="flex items-center justify-between pt-2 border-t border-slate-800">
                     <div class="flex items-center space-x-2">
                         <input type="checkbox" id="checkSticker" checked onchange="alternarExibicaoSticker(this.checked)" class="w-4 h-4 accent-pink-500 rounded cursor-pointer">
@@ -182,7 +182,6 @@
 
     <!-- Lógica JavaScript do PWA, Slider & Editor Canvas -->
     <script>
-        // --- 1. GERAÇÃO DINÂMICA DE DADOS (300+ itens em cada categoria) ---
         const gerarListaGrande = (prefixo, total = 300) => {
             const lista = [];
             const temas = ['Limpeza', 'Café & Amor', 'Motivacional', 'Trabalho', 'Unhas & Estética', 'Pet & Zoi', 'Fitness', 'Negócios', 'Moda', 'Família'];
@@ -215,7 +214,6 @@
             filtros: { templates: '', fundos: '', frases: '', stickers: '' }
         };
 
-        // --- 2. CONTROLE DO SLIDER ---
         function mudarSlide(index) {
             estadoAtual.slideAtual = index;
             const wrapper = document.getElementById('sliderWrapper');
@@ -276,7 +274,6 @@
             carregarECriarCanvas();
         }
 
-        // --- 3. CONFIGURAÇÃO DO CANVAS E RENDERIZAÇÃO ---
         const canvas = document.getElementById('storyCanvas');
         const ctx = canvas.getContext('2d');
 
@@ -340,7 +337,6 @@
             }
             ctx.restore();
 
-            // Desenhar o sticker central apenas se a opção estiver ativa
             if (estadoAtual.mostrarSticker && imgStickerObj.complete && imgStickerObj.naturalWidth !== 0) {
                 const tamanhoSticker = 600;
                 ctx.drawImage(imgStickerObj, (1080 - tamanhoSticker) / 2, 900, tamanhoSticker, tamanhoSticker);
@@ -418,7 +414,6 @@
             }, 'image/jpeg', 0.95);
         }
 
-        // --- 4. REGISTO DE PWA SERVICE WORKER & MANIFEST ---
         const manifestData = {
             name: "storycmtech",
             short_name: "storycmtech",
@@ -459,7 +454,6 @@
             }
         });
 
-        // Inicializar listas e canvas ao carregar a página
         window.onload = () => {
             inicializarListas();
             carregarECriarCanvas();
